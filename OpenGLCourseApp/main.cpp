@@ -1,87 +1,43 @@
+// Include standard libraries and OpenGL libraries
 #include <stdio.h>
+#include <string.h>
 
 #include <GL\glew.h>
 #include <GLFW\glfw3.h>
 
-//Window dimensions
+// Define Window Size and Global Variables
 const GLint WIDTH = 800, HEIGHT = 600;
+GLuint VAO, VBO, shader;
 
-int main() {
+//Vertex Specification: Creating a triangle
+void CreateTriangle()
+{
+	// 0.Define 3 vertices for a triangle
+	GLfloat vertices[] = {
+		-1.0f, -1.0f, 0.0f, // Vertex 1 (X, Y, Z(depth))
+		1.0f, -1.0f, 0.0f,
+		0.0f, 1.0f, 0.0f
+	};
 
-    //initialize GLFW
-    
-    if (!glfwInit()) 
-    {
-		printf("GLFW failed to initialize!");
-        glfwTerminate();
-        return 1;
-    }
-
-	//set up GLFW window properties
-	//Opengl version
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-	//core proFile has no backwards compatibility, don't want to use old OpenGL
-	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-	//Allow forward compatibility
-	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-
-	GLFWwindow* mainWindow = glfwCreateWindow(WIDTH, HEIGHT, "Test Window", NULL, NULL);
+	// 1. Generate VAO (Vertex Array Object)
+	glGenVertexArrays(1, &VAO);
+	// 2. Bind the VAO (activate it to store configurations)
+	glBindVertexArray(VAO);
 	
-	//window creation failed£¬mainWindow is NULL
-	if (!mainWindow)
-	{
-		printf("GLFW window creation failed!");
-		glfwTerminate();
-		return 1;
-	}
+	// 3. Generate VBO (Vertex Buffer Object)
+	glGenBuffers(1, &VBO);
+	// 4. Bind the VBO (activate it to store configurations)
+	glBindBuffer(GL_ARRAY_BUFFER, VBO); 
+	// 5. Attach the vertex data to that VBO.
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-	//get the buffer size of our created window's information
+	// 6. Define the Attribute Pointer formatting (Passing to shader with location 0)
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);	
+	// 7. Enable the Attribute Pointer (Allow passing)
+	glEnableVertexAttribArray(0);
 
-	/*
-	Buffer Objects are OpenGL Objects that store an array of unformatted memory allocated by the OpenGL context (AKA the GPU). 
-	These can be used to store vertex data, pixel data retrieved from images or the framebuffer, 
-	and a variety of other things.
-	*/
+	// 8. Unbind the VAO and VBO, ready for the next object to be bound.
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
 
-	//pass the address of mainwindow, get the buffer size of the window
-	int bufferWidth, bufferHeight;
-	glfwGetFramebufferSize(mainWindow, &bufferWidth, &bufferHeight);
-
-	//set context For GLEW to use
-	// use glew to set up OpenGL functions, need to tie to the window
-	glfwMakeContextCurrent(mainWindow);
-
-	//allow modern extension features
-	glewExperimental = GL_TRUE;
-
-	//initialize GLEW
-	if (glewInit() != GLEW_OK)
-	{
-		printf("GLEW initialization failed!");
-		
-		//need to Destroy the created window
-		glfwDestroyWindow(mainWindow);
-		glfwTerminate();
-		return 1;
-	}
-
-	//set up viewport size
-	glViewport(0, 0, bufferWidth, bufferHeight);
-
-	//loop until window closed
-	while (!glfwWindowShouldClose(mainWindow))
-	{
-		//get + handle user input events
-		glfwPollEvents();
-
-		//clear window
-		glClearColor(1.0f, 0.0f, 0.0f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT);//Just clear the color buffer
-		
-		//swap the front and back buffers, show the rendered result
-		glfwSwapBuffers(mainWindow);
-	}
-
-    return 0;
 }
