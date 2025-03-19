@@ -14,27 +14,28 @@
 
   ### 📖  Overview  of programmable stages
 
-  - ✅ Section 1: Vertex Specification
-  - ✅ Section 2: Description
-  - ⬜️ Section 3: Description
-
+  - ✅ Section 1: **Vertex Specification**
+  - ✅ Section 2: **Vertex Shader and Fragment Shader** 
+  - ✅ Section 3: **Shader program**
+  - ✅ Section 4: **main loop**
+  
   ## 🚩 Vertex Specification
-
+  
   ### 🔸 Create a triangle 
-
+  
   #### 📍 Core Concepts
-
+  
   - **Definition**: 
     - Vertex Specification is the process of clearly describing to OpenGL **what shape to draw** (I draw a triangle), **where the points are stored**, and **how data is organized**.
-
+  
   - **Key Points**:
     - **Vertex Array Object (VAO)**:
        Remembers how vertex data (points, colors, etc.) is structured.
     - **Vertex Buffer Object (VBO)**:
        Actually holds the vertex data inside GPU memory.
-
+  
   #### 📍 Code Example 
-
+  
   ```c++
   // Function to create and set up a simple triangle in OpenGL
   void CreateTriangle()
@@ -82,41 +83,92 @@
       glBindVertexArray(0);
   }
   ```
-
+  
   #### 📍 Thought Process & Analysis
-
+  
   - `glGenVertexArrays(1, &VAO);`This **generates**  a new **VAO** ID into variable 'VAO'. After generation,use `glBindVertexArray(VAO);` to use this VAO. **VBO** similarly. After "Bind", OpenGL will remember which pair of VAO/VBO now is.
   - VBO buffer is just memory space on GPU, typically need **one buffer per type of vertex data**
     - `glBindBuffer()` -https://registry.khronos.org/OpenGL-Refpages/gl4/html/glBindBuffer.xhtml
     - `glBufferData()` -https://registry.khronos.org/OpenGL-Refpages/gl4/html/glBufferData.xhtml
-
+  
   - `glVertexAttribPointer()` & `glEnableVertexAttribArray()` - **Connect your VBO (vertex data) to your vertex shader inputs.**
-    - `glVertexAttribPointer()` -Telling OpenGL how to read vertex data from your VBO and pass it to your vertex shader. -https://registry.khronos.org/OpenGL-Refpages/gl4/html/glVertexAttribPointer.xhtml
-    - `glEnableVertexAttribArray()` -Must enable the **same location number** that you used in your shader. By default, OpenGL **ignores all attributes**. You must turn them **ON** with . -https://registry.khronos.org/OpenGL-Refpages/gl4/html/glEnableVertexAttribArray.xhtml
+    - [`glVertexAttribPointer()`](https://registry.khronos.org/OpenGL-Refpages/gl4/html/glVertexAttribPointer.xhtml) -Telling OpenGL how to read vertex data from your VBO and pass it to your vertex shader. 
+    - [`glEnableVertexAttribArray()`](https://registry.khronos.org/OpenGL-Refpages/gl4/html/glEnableVertexAttribArray.xhtml)-Must enable the **same location number** that you used in your shader. By default, OpenGL **ignores all attributes**. You must turn them **ON** with . 
 
 
-  ## 🚩 Section 2 Title
+  ## 🚩 **Vertex Shader and Fragment Shader** 
 
-  ### 🔸 Subtopic 2.1
+  - ### 🔸 Simple Vertex Shader
+    
+    #### 📍 Core Concepts
+    
+    - **Definition**:
+       The vertex shader runs once for every vertex. It processes positions and passes them down the pipeline.
+    - **Key Points**:
+      - **layout(location = 0) in vec3 pos;**
+         Gets data from `glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, ...);`
+      - **gl_Position**
+         Mandatory output. Defines where this vertex will show up on the screen (clip space).
+    
+    #### 📍 Code Example
+    
+    ```glsl
+    #version 330
+    
+    layout (location = 0) in vec3 pos;
+    
+    void main()
+    {
+        gl_Position = vec4(0.4 * pos.x, 0.4 * pos.y, pos.z, 1.0);
+    }
+    ```
+    
+    #### 📍 Thought Process & Analysis
+    
+    - **gl_Position = vec4(...)**
+       Converts `pos` (vec3) into `vec4` because OpenGL needs 4D (homogeneous) coordinates.
+    - `layout(location = 0)` must match your `glVertexAttribPointer(0, ...)` setting.
+    - **vec3** = GLSL built-in type for Each vertex is **3 floats** = position (x, y, z)
 
-  #### 📍 Core Content
+  - ### 🔸 Simple Fragment Shader
 
-  - Clearly describe specific knowledge points.
+    #### 📍 Core Concepts
 
-  #### 📍 Examples or Images
+    - **Definition**:
+       The fragment shader runs once for every pixel ("fragment") inside the shape, setting its color.
+    - **Key Points**:
+      - **out vec4 colour;**
+         This defines the final color of the pixel.
+      - **vec4(1.0, 0.0, 0.0, 1.0)**
+         This sets **red** color (RGB = 1, 0, 0) with full opacity.
 
-  > Format for images:
+    #### 📍 Code Example
 
-  ```
-  ![Image Description](image-link)
-  ```
+    ```glsl
+    #version 330
+    
+    out vec4 colour;
+    
+    void main()
+    {
+        colour = vec4(1.0, 0.0, 0.0, 1.0);
+    }
+    ```
 
-  #### 📍 Common Issues & Solutions
+    #### 📍 Thought Process & Analysis
 
-  - **Issue 1**: Detailed description
-    - **Solution**: Step-by-step explanation
-  - **Issue 2**: Detailed description
-    - **Solution**: Step-by-step explanation
+    - **out vec4 colour**
+       The final color output of the pixel that will show on screen.
+    - **vec4(1, 0, 0, 1)**
+       Means full **red** (R=1, G=0, B=0) with full **alpha** (A=1 = no transparency).
+    - **Every pixel inside the triangle will be fully red**.
+
+    ------
+
+    🟢 These two shaders together:
+
+    - **Vertex Shader** ➡️ positions the triangle.
+    - **Fragment Shader** ➡️ colors it red.
 
   ## 🚩 Section 3 Title
 
