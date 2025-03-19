@@ -41,3 +41,74 @@ void CreateTriangle()
 	glBindVertexArray(0);
 
 }
+
+int main()
+{
+	// 1. Initalize GLFW
+
+	if ( !glfwInit() )
+	{
+		printf("GLFW Initialization failed!");
+		glfwTerminate();
+		return 1;
+	}
+
+	// set up GLFW window properties
+	// Opengl version
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
+	// core proFile has no backwards compatibility, don't want to use old OpenGL
+	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+	// Allow forward compatibility
+	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+
+	// Creates a window and its associated OpenGL or OpenGL ES context.
+	GLFWwindow* mainWindow = glfwCreateWindow(WIDTH, HEIGHT, "Test Window",NULL, NULL);
+	if (!mainWindow)
+	{
+		printf("GLFW failed to create window!");
+		glfwTerminate();
+		return 1;
+	}
+
+	// 2. Get OpenGL ready
+	// Get the buffer size of our created window's information
+	int bufferWidth, bufferHeight;
+	glfwGetFramebufferSize(mainWindow, &bufferWidth, &bufferHeight); 
+	// Set the context for GLEW to use (Choose the 'mainWindow' for OpenGL target)
+	glfwMakeContextCurrent(mainWindow);
+	
+	
+	// Initialize GLEW
+	glewExperimental = GL_TRUE;
+	if (glewInit() != GLEW_OK)
+	{
+		printf("GLEW initialization failed!");
+
+		//need to Destroy the created window
+		glfwDestroyWindow(mainWindow);
+		glfwTerminate();
+		return 1;
+	}
+	
+	
+	//set up viewport size for OpenGL to draw in
+	glViewport(0, 0, bufferWidth, bufferHeight);
+
+
+	//loop until window closed
+	while (!glfwWindowShouldClose(mainWindow))
+	{
+		//get + handle user input events
+		glfwPollEvents();
+
+		//set clear window red
+		glClearColor(1.0f, 0.0f, 0.0f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT); //Clear window to red
+
+		//swap the front and back buffers, show the rendered result
+		glfwSwapBuffers(mainWindow);
+	}
+
+	return 0;
+}
