@@ -10,19 +10,19 @@ const GLint WIDTH = 800, HEIGHT = 600;
 GLuint VAO, VBO, shader;
 
 // Vertex Shader code
-static const char* vShader = "                                                \n\
-#version 330                                                                  \n\
+static const char* vertexShaderSource = "                                                \n\
+#version 460                                                                  \n\
                                                                               \n\
 layout (location = 0) in vec3 pos;											  \n\
                                                                               \n\
 void main()                                                                   \n\
 {                                                                             \n\
-    gl_Position = vec4(0.4 * pos.x, 0.4 * pos.y, pos.z, 1.0);				  \n\
+    gl_Position = vec4(pos.x, pos.y, pos.z, 1.0);				  \n\
 }";
 
 // Fragment Shader
-static const char* fShader = "                                                \n\
-#version 330                                                                  \n\
+static const char* fragmentShaderSource = "                                                \n\
+#version 460                                                                  \n\
                                                                               \n\
 out vec4 colour;                                                              \n\
                                                                               \n\
@@ -65,6 +65,70 @@ void CreateTriangle()
 	glBindVertexArray(0);
 
 }
+// Create the shader
+void AddShader(GLuint theProgram, const char* shaderCode, GLenum shaderType)
+{
+	// 1. Create a shader object
+	GLuint theShader = glCreateShader(shaderType);
+	
+	// 2. Attach the shader source code to the shader object
+	glShaderSource(theShader, 1, &shaderCode, NULL);
+	glCompileShader(theShader);
+
+	int  success;
+	char infoLog[1024];
+	glGetShaderiv(theShader, GL_COMPILE_STATUS, &success);
+	if (!success)
+	{
+		glGetShaderInfoLog(theShader, 1024, NULL, infoLog);
+		printf("Error compiling shader type %d: '%s'\n", shaderType, infoLog);
+		return;
+
+	}
+	glAttachShader(theProgram, theShader);
+
+}	
+
+// Compile the shader
+void CompileShaders()
+{
+	// 1. Create a shader program
+	shader = glCreateProgram();
+	if (!shader)
+	{
+		printf("Error creating shader program!\n");
+		return;
+	}
+
+	// Add the shader to the program
+	AddShader(shader, vertexShaderSource, GL_VERTEX_SHADER);
+	AddShader(shader, fragmentShaderSource, GL_FRAGMENT_SHADER);
+
+	int  success;
+	char infoLog[1024];
+
+	// Link the shader program (make it executable)
+	glLinkProgram(shader);
+	glGetProgramiv(shader, GL_LINK_STATUS, &success);
+	if (!success)
+	{
+		glGetProgramInfoLog(shader, 1024, NULL, infoLog);
+		printf("Error linking shader program: '%s'\n", infoLog);
+		return;
+	}
+
+	// Validate the program (optional, but recommended for debugging)
+	glValidateProgram(shader);
+	glGetProgramiv(shader, GL_VALIDATE_STATUS, &success);
+	if (!success)
+	{
+		glGetProgramInfoLog(shader, 1024, NULL, infoLog);
+		printf("Error validating shader program: '%s'\n", infoLog);
+		return;
+	}
+}
+
+
 
 int main()
 {
@@ -119,6 +183,8 @@ int main()
 	//set up viewport size for OpenGL to draw in
 	glViewport(0, 0, bufferWidth, bufferHeight);
 
+	CreateTriangle();
+	CompileShaders();
 
 	//loop until window closed
 	while (!glfwWindowShouldClose(mainWindow))
@@ -127,8 +193,18 @@ int main()
 		glfwPollEvents();
 
 		//set clear window red
-		glClearColor(1.0f, 0.0f, 0.0f, 1.0f);
+		glClearColor(0.0f, 1.0f, 0.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT); //Clear window to red
+
+		// simply using the shader program
+		glUseProgram(shader);
+		//printf("Shader Program ID: %d\n", shader);
+		glBindVertexArray(VAO);
+		// draw the object
+		glDrawArrays(GL_TRIANGLES, 0, 3);
+		glBindVertexArray(0);
+
+		glUseProgram(0);
 
 		//swap the front and back buffers, show the rendered result
 		glfwSwapBuffers(mainWindow);
