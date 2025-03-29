@@ -170,25 +170,223 @@
     - **Vertex Shader** ➡️ positions the triangle.
     - **Fragment Shader** ➡️ colors it red.
 
-  ## 🚩 Section 3 Title
+  ## 🚩 Shader program 
 
-  ### 🔸 Subtopic 3.1
+### 🔸 Adding Shader function
 
-  #### 📍 Practical Steps
+#### 📍 Core Concepts
 
-  1. Step 1: Concise description
-  2. Step 2: Concise description
+- A shader object is used to maintain the source code strings that define a shader.
+- In a shader object, compilation status will be stored.
+- Needs to Attaches a shader object to a program object.
 
-  #### 📍 Tips and Cautions
+📍 Code Example
 
-  - **Tip 1**: Detailed explanation
-  - **Tip 2**: Detailed explanation
+```c++
+void AddShader(GLuint theProgram, const char* shaderCode, GLenum shaderType)
+{
+	// 1. Create a shader object
+	GLuint theShader = glCreateShader(shaderType);
+	
+	// 2. Attach the shader source code to the shader object
+	glShaderSource(theShader, 1, &shaderCode, NULL);
+	glCompileShader(theShader);
 
-  ## 📝 Next Steps (Optional, good for ongoing updates)
+	int  success;
+	char infoLog[1024];
+	glGetShaderiv(theShader, GL_COMPILE_STATUS, &success);
+	if (!success)
+	{
+		glGetShaderInfoLog(theShader, 1024, NULL, infoLog);
+		printf("Error compiling shader type %d: '%s'\n", shaderType, infoLog);
+		return;
+	}
+	glAttachShader(theProgram, theShader);
+}	
+```
 
-  - 
+📍 Thought Process & Analysis
 
-  ## 📚 References
+* [`glCreateShader()`](https://registry.khronos.org/OpenGL-Refpages/gl4/html/glCreateShader.xhtml) -Creates an empty shader object and returns a non-zero value by which it can be referenced.
+* [`glShaderSource`](https://registry.khronos.org/OpenGL-Refpages/gl4/html/glShaderSource.xhtml) — Replaces the source code in a shader object
+* [`glCompileShader`](https://registry.khronos.org/OpenGL-Refpages/gl4/html/glCompileShader.xhtml) compiles the source code strings that have been stored in the shader object specified by *`shader`*.
+* [`glAttachShader`](https://registry.khronos.org/OpenGL-Refpages/gl4/html/glAttachShader.xhtml) attaches the shader object specified by *`shader`* to the program object specified by *`program`*.
 
-  - Official Documentation
-  - Relevant Blog Article
+----
+
+### 🔸 Creating a shader program
+
+#### 📍 Core Concepts
+
+- This function **creates**, **links**, and **validates** a complete shader program.
+-  A program object is an object to which shader objects can be attached.
+- Attached shader objects will be used to create an executable that will run on the programmable processor.
+- `glLinkProgram` takes all the **attached shaders** (like vertex and fragment) and **links** them into a single **executable GPU program**.
+
+#### 📍 Code Example
+
+```c++
+void CompileShaders()
+{
+	// 1. Create a shader program
+	shader = glCreateProgram();
+	if (!shader)
+	{
+		printf("Error creating shader program!\n");
+		return;
+	}
+
+	// Add the shader to the program
+	AddShader(shader, vertexShaderSource, GL_VERTEX_SHADER);
+	AddShader(shader, fragmentShaderSource, GL_FRAGMENT_SHADER);
+
+	int  success;
+	char infoLog[1024];
+
+	// Link the shader program (make it executable)
+	glLinkProgram(shader);
+	glGetProgramiv(shader, GL_LINK_STATUS, &success);
+	if (!success)
+	{
+		glGetProgramInfoLog(shader, 1024, NULL, infoLog);
+		printf("Error linking shader program: '%s'\n", infoLog);
+		return;
+	}
+
+	// Validate the program (optional, but recommended for debugging)
+	glValidateProgram(shader);
+	glGetProgramiv(shader, GL_VALIDATE_STATUS, &success);
+	if (!success)
+	{
+		glGetProgramInfoLog(shader, 1024, NULL, infoLog);
+		printf("Error validating shader program: '%s'\n", infoLog);
+		return;
+	}
+}
+```
+
+------
+
+#### 📍 Thought Process & Analysis
+
+- `glCreateProgram` creates an empty program object and returns a non-zero value by which it can be referenced.
+- `glAttachShader` attaches the shader object specified by *`shader`* to the program object specified by *`program`*.
+- `glLinkProgram` links the program object specified by *`program`*. 
+
+----
+
+**🔸Using the shader program & Initiating Draw**
+
+📍 Core Concepts
+
+* for Using shader program:
+  * When you create a shader, an ID is given (like with VAOs and VBOs). 
+  * Simply call `glUseProgram(shaderID)` 
+  * All draw calls from then on will use that shader,  shader is stopped by using `glUseProgram(0)`
+
+* for Initiating Draw:
+  1. Activate Shader Program you want to use. 
+  2. Bind VAO of object you want to draw. 
+  3. Call `glDrawArrays`, which initiates the rest of the pipeline.
+
+```C++
+int main()
+{
+	// Initalize GLFW
+    ...
+	// Get OpenGL ready
+	...
+	// Initialize GLEW
+	...	
+	//set up viewport size for OpenGL to draw in
+	...
+
+	CreateTriangle();
+	CompileShaders();
+	//loop until window closed
+	while (!glfwWindowShouldClose(mainWindow))
+	{
+		//get + handle user input events
+		glfwPollEvents();
+
+		//set clear window red
+		glClearColor(0.0f, 1.0f, 0.0f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT); //Clear window to red
+
+		glUseProgram(shader);
+		//printf("Shader Program ID: %d\n", shader);
+		glBindVertexArray(VAO);
+		glDrawArrays(GL_TRIANGLES, 0, 3);
+        //unbind 
+		glBindVertexArray(0);
+		glUseProgram(0);
+
+		//swap the front and back buffers, show the rendered result
+		glfwSwapBuffers(mainWindow);
+	}
+
+	return 0;
+}
+```
+
+📍 Thought Process & Analysis
+
+* `CreateTriangle()` -Create triangle points and store information into **VAO**
+* `CompileShaders()` -Create shader program for later using
+* `glUseProgram` — Installs a program object as part of current rendering state
+* `glDrawArrays` — When `glDrawArrays` is called, it uses *`count`* sequential elements from each enabled array to construct a sequence of geometric primitives, VAO points to these array
+
+### 🎯 Breakdown:
+
+1. **Before drawing**:
+
+   - You upload vertex data to the GPU using VBO.
+
+   - You link that data to a shader attribute using:
+
+     ```c++
+     glVertexAttribPointer(...);
+     glEnableVertexAttribArray(...);
+     ```
+
+2. **When you call** `glDrawArrays(...)`:
+
+   - OpenGL:
+
+     - Uses the VAO to find the right VBO and layout.
+
+     - Starts feeding vertex data into the **vertex shader**.
+
+     - Each vertex goes into the shader input like:
+
+       ```glsl
+       layout(location = 0) in vec3 pos;
+       ```
+
+------
+
+### 📌 Example Flow:
+
+```
+cppCopyEditglBindVertexArray(VAO);       // VAO knows which VBO + layout
+glUseProgram(shader);         // Shader is active
+glDrawArrays(GL_TRIANGLES, 0, 3); // 🔥 Now vertex data goes into shader
+```
+
+→ At this moment, the GPU takes 3 vertices
+ → Passes each one to your vertex shader
+ → The output of vertex shader goes to the rest of the pipeline
+
+## ✅ Why `glBindVertexArray(VAO)` still works after unbinding?
+
+Because **VAO stores all settings** when it's bound.
+
+Even if you unbind later, OpenGL already **saved**:
+
+- Which VBO was bound
+- How the vertex data is formatted (`glVertexAttribPointer`)
+- Which attributes are enabled (`glEnableVertexAttribArray`)
+
+
+
+![image-20250329204520174](C:\Users\t\AppData\Roaming\Typora\typora-user-images\image-20250329204520174.png)
